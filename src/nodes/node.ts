@@ -1,7 +1,7 @@
 import bodyParser from "body-parser";
 import express from "express";
 import { BASE_NODE_PORT } from "../config";
-import { Value } from "../types";
+import { Value, NodeState } from "../types";
 
 export async function node(
   nodeId: number, // the ID of the node
@@ -16,25 +16,57 @@ export async function node(
   node.use(express.json());
   node.use(bodyParser.json());
 
+  let nodeState: NodeState = {
+    killed: false,
+    x: isFaulty ? null : initialValue,
+    decided: null,
+    k: null,
+  };
+
   // TODO implement this
   // this route allows retrieving the current status of the node
-  // node.get("/status", (req, res) => {});
+  // Route /status
+  node.get("/status", (req, res) => {
+    if (isFaulty) {
+      return res.status(500).json({ message: "faulty" });
+    }
+    res.status(200).json({ message: "live" });
+  });
 
   // TODO implement this
   // this route allows the node to receive messages from other nodes
-  // node.post("/message", (req, res) => {});
+  // Route /message (Handles messages from other nodes)
+  node.post("/message", (req, res) => {
+    if (nodeState.killed) {
+      return res.status(500).json({ message: "Node is stopped" });
+    }
+    // Placeholder for handling messages in Ben-Or consensus
+    res.status(200).json({ message: "Message received" });
+  });
 
   // TODO implement this
   // this route is used to start the consensus algorithm
-  // node.get("/start", async (req, res) => {});
-
+  // Route /start (Initiates Ben-Or Algorithm)
+  node.get("/start", async (req, res) => {
+    if (nodeState.killed) {
+      return res.status(500).json({ message: "Node is stopped" });
+    }
+    // Placeholder for Ben-Or algorithm logic
+    res.status(200).json({ message: "Consensus algorithm started" });
+  });
   // TODO implement this
   // this route is used to stop the consensus algorithm
-  // node.get("/stop", async (req, res) => {});
-
+  // Route /stop (Stops the node activity)
+  node.get("/stop", async (req, res) => {
+    nodeState.killed = true;
+    res.status(200).json({ message: "Node stopped" });
+  });
   // TODO implement this
   // get the current state of a node
-  // node.get("/getState", (req, res) => {});
+  // Route /getState
+  node.get("/getState", (req, res) => {
+    res.json(nodeState);
+  });
 
   // start the server
   const server = node.listen(BASE_NODE_PORT + nodeId, async () => {
